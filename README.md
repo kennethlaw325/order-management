@@ -30,7 +30,7 @@
 
 ```bash
 # 克隆專案
-git clone https://github.com/YOUR_USERNAME/order-management.git
+git clone https://github.com/kennethlaw325/order-management.git
 cd order-management
 
 # 安裝依賴
