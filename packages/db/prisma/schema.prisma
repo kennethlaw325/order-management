@@ -1,0 +1,113 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  password  String
+  role      String   @default("cashier") // admin | manager | cashier
+  storeId   String?
+  store     Store?   @relation(fields: [storeId], references: [id])
+  orders    Order[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Store {
+  id        String      @id @default(cuid())
+  name      String
+  address   String?
+  phone     String?
+  users     User[]
+  inventory Inventory[]
+  orders    Order[]
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+}
+
+model Category {
+  id          String     @id @default(cuid())
+  name        String
+  description String?
+  parentId    String?
+  parent      Category?  @relation("CategoryTree", fields: [parentId], references: [id])
+  children    Category[] @relation("CategoryTree")
+  products    Product[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model Product {
+  id         String      @id @default(cuid())
+  name       String
+  sku        String?     @unique
+  barcode    String?     @unique
+  price      Float
+  cost       Float?
+  categoryId String?
+  category   Category?   @relation(fields: [categoryId], references: [id])
+  isActive   Boolean     @default(true)
+  inventory  Inventory[]
+  orderItems OrderItem[]
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+}
+
+model Inventory {
+  id                String  @id @default(cuid())
+  productId         String
+  product           Product @relation(fields: [productId], references: [id])
+  storeId           String
+  store             Store   @relation(fields: [storeId], references: [id])
+  quantity          Int     @default(0)
+  lowStockThreshold Int     @default(10)
+
+  @@unique([productId, storeId])
+}
+
+model Order {
+  id            String      @id @default(cuid())
+  orderNumber   String      @unique
+  storeId       String
+  store         Store       @relation(fields: [storeId], references: [id])
+  cashierId     String
+  cashier       User        @relation(fields: [cashierId], references: [id])
+  customerId    String?
+  subtotal      Float
+  discount      Float       @default(0)
+  tax           Float       @default(0)
+  total         Float
+  paymentMethod String
+  status        String      @default("completed")
+  items         OrderItem[]
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id])
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int
+  unitPrice Float
+  discount  Float   @default(0)
+  subtotal  Float
+}
+
+model Customer {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String?
+  email     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
