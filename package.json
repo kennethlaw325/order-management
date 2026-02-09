@@ -1,0 +1,21 @@
+{
+  "name": "enterprise-pos",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "db:push": "cd packages/db && npx prisma db push",
+    "db:studio": "cd packages/db && npx prisma studio",
+    "db:seed": "cd packages/db && npx tsx src/seed.ts"
+  },
+  "devDependencies": {
+    "turbo": "^2",
+    "typescript": "^5"
+  },
+  "packageManager": "npm@10.0.0"
+}
