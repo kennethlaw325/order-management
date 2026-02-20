@@ -6,12 +6,15 @@ const router = express.Router();
 // Get all customers
 router.get('/', (req, res) => {
     try {
+        const { search } = req.query;
         const customers = db.prepare(`
-      SELECT c.*, 
-        (SELECT COUNT(*) FROM orders WHERE customer_id = c.id) as order_count
+      SELECT c.*,
+        (SELECT COUNT(*) FROM orders WHERE customer_id = c.id) as order_count,
+        (SELECT COALESCE(SUM(total), 0) FROM orders WHERE customer_id = c.id AND status = 'completed') as total_spent
       FROM customers c
+      WHERE (? IS NULL OR c.name LIKE ? OR c.email LIKE ? OR c.phone LIKE ?)
       ORDER BY c.created_at DESC
-    `).all();
+    `).all(search || null, search ? `%${search}%` : null, search ? `%${search}%` : null, search ? `%${search}%` : null);
         res.json(customers);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -21,16 +24,23 @@ router.get('/', (req, res) => {
 // Get single customer
 router.get('/:id', (req, res) => {
     try {
-        const customer = db.prepare('SELECT * FROM customers WHERE id = ?').get(req.params.id);
+        const customer = db.prepare(`
+      SELECT c.*,
+        (SELECT COUNT(*) FROM orders WHERE customer_id = c.id) as order_count,
+        (SELECT COALESCE(SUM(total), 0) FROM orders WHERE customer_id = c.id AND status = 'completed') as total_spent
+      FROM customers c WHERE c.id = ?
+    `).get(req.params.id);
         if (!customer) {
             return res.status(404).json({ error: 'Customer not found' });
         }
 
-        // Get customer's orders
+        // Get customer's orders with customer name
         const orders = db.prepare(`
-      SELECT * FROM orders 
-      WHERE customer_id = ? 
-      ORDER BY created_at DESC
+      SELECT o.*, c.name as customer_name
+      FROM orders o
+      LEFT JOIN customers c ON o.customer_id = c.id
+      WHERE o.customer_id = ?
+      ORDER BY o.created_at DESC
     `).all(req.params.id);
 
         res.json({ ...customer, orders });
