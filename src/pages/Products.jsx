@@ -40,7 +40,7 @@ function Products() {
                 : '/api/products';
             const method = editingProduct ? 'PUT' : 'POST';
 
-            await fetch(url, {
+            const res = await fetch(url, {
                 method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -49,6 +49,11 @@ function Products() {
                     stock: parseInt(formData.stock) || 0
                 })
             });
+            const data = await res.json();
+            if (!res.ok) {
+                toast.error(data.error || '操作失敗');
+                return;
+            }
 
             toast.success(editingProduct ? '產品資料已更新' : '產品建立成功');
             fetchProducts();
@@ -61,7 +66,12 @@ function Products() {
     const handleDelete = async (id) => {
         if (!confirm('確定要刪除此產品嗎？')) return;
         try {
-            await fetch(`/api/products/${id}`, { method: 'DELETE' });
+            const res = await fetch(`/api/products/${id}`, { method: 'DELETE' });
+            if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                toast.error(data.error || '操作失敗');
+                return;
+            }
             toast.success('產品已刪除');
             fetchProducts();
         } catch (error) {

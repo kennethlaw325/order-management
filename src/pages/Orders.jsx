@@ -77,11 +77,16 @@ function Orders() {
 
     const updateStatus = async (id, newStatus) => {
         try {
-            await fetch(`/api/orders/${id}/status`, {
+            const res = await fetch(`/api/orders/${id}/status`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status: newStatus })
             });
+            const data = await res.json();
+            if (!res.ok) {
+                toast.error(data.error || '操作失敗');
+                return;
+            }
             toast.success('訂單狀態已更新');
             fetchData();
         } catch (error) {

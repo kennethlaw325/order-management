@@ -71,33 +71,32 @@ router.post('/', (req, res) => {
             }
         }
 
-        // Validate all products exist and have sufficient stock
-        const insufficientStock = [];
-        const productLookups = items.map(item => {
-            const product = db.prepare('SELECT * FROM products WHERE id = ?').get(item.product_id);
-            if (!product) {
-                throw new Error(`Product with id ${item.product_id} not found`);
-            }
-            if (product.stock < item.quantity) {
-                insufficientStock.push({
-                    product_id: product.id,
-                    product_name: product.name,
-                    requested: item.quantity,
-                    available: product.stock
-                });
-            }
-            return { product, quantity: item.quantity };
-        });
-
-        if (insufficientStock.length > 0) {
-            return res.status(400).json({
-                error: 'Insufficient stock for one or more products',
-                insufficient_items: insufficientStock
-            });
-        }
-
-        // Execute order creation in a transaction
+        // Execute order creation in a transaction (includes stock validation)
         const createOrder = db.transaction(() => {
+            // Validate all products exist and have sufficient stock
+            const insufficientStock = [];
+            const productLookups = items.map(item => {
+                const product = db.prepare('SELECT * FROM products WHERE id = ?').get(item.product_id);
+                if (!product) {
+                    throw new Error(`Product with id ${item.product_id} not found`);
+                }
+                if (product.stock < item.quantity) {
+                    insufficientStock.push({
+                        product_id: product.id,
+                        product_name: product.name,
+                        requested: item.quantity,
+                        available: product.stock
+                    });
+                }
+                return { product, quantity: item.quantity };
+            });
+
+            if (insufficientStock.length > 0) {
+                const err = new Error('Insufficient stock for one or more products');
+                err.insufficientStock = insufficientStock;
+                throw err;
+            }
+
             // Calculate total
             let total = 0;
             const processedItems = productLookups.map(({ product, quantity }) => {
@@ -147,6 +146,12 @@ router.post('/', (req, res) => {
 
         res.status(201).json({ ...order, items: orderItems });
     } catch (error) {
+        if (error.insufficientStock) {
+            return res.status(400).json({
+                error: error.message,
+                insufficient_items: error.insufficientStock
+            });
+        }
         res.status(500).json({ error: error.message });
     }
 });
@@ -166,21 +171,29 @@ router.patch('/:id/status', (req, res) => {
             return res.status(404).json({ error: 'Order not found' });
         }
 
-        // If cancelling, restore stock
+        // If cancelling, restore stock within a transaction
         if (status === 'cancelled' && existing.status !== 'cancelled') {
-            const items = db.prepare('SELECT * FROM order_items WHERE order_id = ?').all(req.params.id);
-            for (const item of items) {
-                if (item.product_id) {
-                    db.prepare('UPDATE products SET stock = stock + ? WHERE id = ?').run(item.quantity, item.product_id);
+            const cancelOrder = db.transaction(() => {
+                const items = db.prepare('SELECT * FROM order_items WHERE order_id = ?').all(req.params.id);
+                for (const item of items) {
+                    if (item.product_id) {
+                        db.prepare('UPDATE products SET stock = stock + ? WHERE id = ?').run(item.quantity, item.product_id);
+                    }
                 }
-            }
+                db.prepare(`
+              UPDATE orders
+              SET status = ?, updated_at = CURRENT_TIMESTAMP
+              WHERE id = ?
+            `).run(status, req.params.id);
+            });
+            cancelOrder();
+        } else {
+            db.prepare(`
+          UPDATE orders
+          SET status = ?, updated_at = CURRENT_TIMESTAMP
+          WHERE id = ?
+        `).run(status, req.params.id);
         }
-
-        db.prepare(`
-      UPDATE orders 
-      SET status = ?, updated_at = CURRENT_TIMESTAMP
-      WHERE id = ?
-    `).run(status, req.params.id);
 
         const order = db.prepare(`
       SELECT o.*, c.name as customer_name
@@ -203,17 +216,20 @@ router.delete('/:id', (req, res) => {
             return res.status(404).json({ error: 'Order not found' });
         }
 
-        // Restore stock if order wasn't cancelled
-        if (existing.status !== 'cancelled') {
-            const items = db.prepare('SELECT * FROM order_items WHERE order_id = ?').all(req.params.id);
-            for (const item of items) {
-                if (item.product_id) {
-                    db.prepare('UPDATE products SET stock = stock + ? WHERE id = ?').run(item.quantity, item.product_id);
+        // Restore stock and delete order in a transaction
+        const deleteOrder = db.transaction(() => {
+            if (existing.status !== 'cancelled') {
+                const items = db.prepare('SELECT * FROM order_items WHERE order_id = ?').all(req.params.id);
+                for (const item of items) {
+                    if (item.product_id) {
+                        db.prepare('UPDATE products SET stock = stock + ? WHERE id = ?').run(item.quantity, item.product_id);
+                    }
                 }
             }
-        }
+            db.prepare('DELETE FROM orders WHERE id = ?').run(req.params.id);
+        });
+        deleteOrder();
 
-        db.prepare('DELETE FROM orders WHERE id = ?').run(req.params.id);
         res.json({ message: 'Order deleted successfully' });
     } catch (error) {
         res.status(500).json({ error: error.message });
