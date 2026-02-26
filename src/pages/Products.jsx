@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
+import { formatCurrency } from '../utils';
+import { useToast } from '../components/Toast';
 
 function Products() {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [search, setSearch] = useState('');
     const [showModal, setShowModal] = useState(false);
     const [editingProduct, setEditingProduct] = useState(null);
     const [formData, setFormData] = useState({
@@ -11,6 +14,7 @@ function Products() {
         price: '',
         stock: ''
     });
+    const toast = useToast();
 
     useEffect(() => {
         fetchProducts();
@@ -22,7 +26,7 @@ function Products() {
             const data = await res.json();
             setProducts(data);
         } catch (error) {
-            console.error('Failed to fetch products:', error);
+            toast.error('無法載入產品資料');
         } finally {
             setLoading(false);
         }
@@ -46,10 +50,11 @@ function Products() {
                 })
             });
 
+            toast.success(editingProduct ? '產品資料已更新' : '產品建立成功');
             fetchProducts();
             closeModal();
         } catch (error) {
-            console.error('Failed to save product:', error);
+            toast.error('儲存產品資料失敗');
         }
     };
 
@@ -57,9 +62,10 @@ function Products() {
         if (!confirm('確定要刪除此產品嗎？')) return;
         try {
             await fetch(`/api/products/${id}`, { method: 'DELETE' });
+            toast.success('產品已刪除');
             fetchProducts();
         } catch (error) {
-            console.error('Failed to delete product:', error);
+            toast.error('刪除產品失敗');
         }
     };
 
@@ -85,14 +91,6 @@ function Products() {
         setFormData({ name: '', description: '', price: '', stock: '' });
     };
 
-    const formatCurrency = (amount) => {
-        return new Intl.NumberFormat('zh-TW', {
-            style: 'currency',
-            currency: 'TWD',
-            minimumFractionDigits: 0
-        }).format(amount);
-    };
-
     if (loading) {
         return <div className="loading"><div className="spinner"></div></div>;
     }
@@ -105,13 +103,26 @@ function Products() {
             </div>
 
             <div className="toolbar">
+                <input
+                    type="text"
+                    className="form-input search-input"
+                    placeholder="搜尋產品名稱或描述..."
+                    value={search}
+                    onChange={e => setSearch(e.target.value)}
+                />
                 <button className="btn btn-primary" onClick={() => openModal()}>
                     ＋ 新增產品
                 </button>
             </div>
 
             <div className="card">
-                {products.length > 0 ? (
+                {(() => {
+                    const filtered = products.filter((p) => {
+                        const q = search.toLowerCase();
+                        return p.name.toLowerCase().includes(q)
+                            || (p.description || '').toLowerCase().includes(q);
+                    });
+                    if (filtered.length > 0) return (
                     <div className="table-container">
                         <table>
                             <thead>
@@ -124,7 +135,7 @@ function Products() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {products.map((product) => (
+                                {filtered.map((product) => (
                                     <tr key={product.id}>
                                         <td style={{ fontWeight: 500, color: 'var(--text-primary)' }}>
                                             {product.name}
@@ -161,7 +172,8 @@ function Products() {
                             </tbody>
                         </table>
                     </div>
-                ) : (
+                );
+                    if (products.length === 0) return (
                     <div className="empty-state">
                         <div className="empty-state-icon">🏷️</div>
                         <p className="empty-state-text">尚無產品資料</p>
@@ -169,7 +181,13 @@ function Products() {
                             新增第一個產品
                         </button>
                     </div>
-                )}
+                    );
+                    return (
+                    <div className="empty-state">
+                        <p className="empty-state-text">找不到符合的產品</p>
+                    </div>
+                    );
+                })()}
             </div>
 
             {showModal && (

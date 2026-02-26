@@ -64,43 +64,77 @@ router.post('/', (req, res) => {
             return res.status(400).json({ error: 'Order must have at least one item' });
         }
 
-        // Calculate total
-        let total = 0;
-        const processedItems = items.map(item => {
+        // Validate quantity is a positive integer
+        for (const item of items) {
+            if (!Number.isInteger(item.quantity) || item.quantity <= 0) {
+                return res.status(400).json({ error: `Invalid quantity for product_id ${item.product_id}: quantity must be a positive integer` });
+            }
+        }
+
+        // Validate all products exist and have sufficient stock
+        const insufficientStock = [];
+        const productLookups = items.map(item => {
             const product = db.prepare('SELECT * FROM products WHERE id = ?').get(item.product_id);
             if (!product) {
                 throw new Error(`Product with id ${item.product_id} not found`);
             }
-            const itemTotal = product.price * item.quantity;
-            total += itemTotal;
-            return {
-                product_id: product.id,
-                product_name: product.name,
-                quantity: item.quantity,
-                unit_price: product.price
-            };
+            if (product.stock < item.quantity) {
+                insufficientStock.push({
+                    product_id: product.id,
+                    product_name: product.name,
+                    requested: item.quantity,
+                    available: product.stock
+                });
+            }
+            return { product, quantity: item.quantity };
         });
 
-        // Create order
-        const orderResult = db.prepare(`
-      INSERT INTO orders (customer_id, status, total, notes)
-      VALUES (?, 'pending', ?, ?)
-    `).run(customer_id || null, total, notes || null);
-
-        const orderId = orderResult.lastInsertRowid;
-
-        // Insert order items
-        const insertItem = db.prepare(`
-      INSERT INTO order_items (order_id, product_id, product_name, quantity, unit_price)
-      VALUES (?, ?, ?, ?, ?)
-    `);
-
-        for (const item of processedItems) {
-            insertItem.run(orderId, item.product_id, item.product_name, item.quantity, item.unit_price);
-
-            // Update stock
-            db.prepare('UPDATE products SET stock = stock - ? WHERE id = ?').run(item.quantity, item.product_id);
+        if (insufficientStock.length > 0) {
+            return res.status(400).json({
+                error: 'Insufficient stock for one or more products',
+                insufficient_items: insufficientStock
+            });
         }
+
+        // Execute order creation in a transaction
+        const createOrder = db.transaction(() => {
+            // Calculate total
+            let total = 0;
+            const processedItems = productLookups.map(({ product, quantity }) => {
+                const itemTotal = product.price * quantity;
+                total += itemTotal;
+                return {
+                    product_id: product.id,
+                    product_name: product.name,
+                    quantity,
+                    unit_price: product.price
+                };
+            });
+
+            // Create order
+            const orderResult = db.prepare(`
+          INSERT INTO orders (customer_id, status, total, notes)
+          VALUES (?, 'pending', ?, ?)
+        `).run(customer_id || null, total, notes || null);
+
+            const orderId = orderResult.lastInsertRowid;
+
+            // Insert order items and update stock
+            const insertItem = db.prepare(`
+          INSERT INTO order_items (order_id, product_id, product_name, quantity, unit_price)
+          VALUES (?, ?, ?, ?, ?)
+        `);
+            const updateStock = db.prepare('UPDATE products SET stock = stock - ? WHERE id = ?');
+
+            for (const item of processedItems) {
+                insertItem.run(orderId, item.product_id, item.product_name, item.quantity, item.unit_price);
+                updateStock.run(item.quantity, item.product_id);
+            }
+
+            return orderId;
+        });
+
+        const orderId = createOrder();
 
         const order = db.prepare(`
       SELECT o.*, c.name as customer_name

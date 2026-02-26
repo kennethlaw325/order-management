@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { formatCurrency, getStatusLabel, formatDate } from '../utils';
+import { useToast } from '../components/Toast';
 
 function Orders() {
     const [orders, setOrders] = useState([]);
@@ -12,6 +14,7 @@ function Orders() {
         notes: '',
         items: [{ product_id: '', quantity: 1 }]
     });
+    const toast = useToast();
 
     useEffect(() => {
         fetchData();
@@ -29,7 +32,7 @@ function Orders() {
             setCustomers(await customersRes.json());
             setProducts(await productsRes.json());
         } catch (error) {
-            console.error('Failed to fetch data:', error);
+            toast.error('無法載入訂單資料');
         } finally {
             setLoading(false);
         }
@@ -40,12 +43,12 @@ function Orders() {
 
         const validItems = formData.items.filter(item => item.product_id && item.quantity > 0);
         if (validItems.length === 0) {
-            alert('請至少選擇一個產品');
+            toast.warning('請至少選擇一個產品');
             return;
         }
 
         try {
-            await fetch('/api/orders', {
+            const res = await fetch('/api/orders', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -58,10 +61,17 @@ function Orders() {
                 })
             });
 
+            if (!res.ok) {
+                const data = await res.json();
+                toast.error(data.error || '建立訂單失敗');
+                return;
+            }
+
+            toast.success('訂單建立成功');
             fetchData();
             closeModal();
         } catch (error) {
-            console.error('Failed to create order:', error);
+            toast.error('建立訂單失敗');
         }
     };
 
@@ -72,9 +82,10 @@ function Orders() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status: newStatus })
             });
+            toast.success('訂單狀態已更新');
             fetchData();
         } catch (error) {
-            console.error('Failed to update status:', error);
+            toast.error('更新狀態失敗');
         }
     };
 
@@ -82,9 +93,10 @@ function Orders() {
         if (!confirm('確定要刪除此訂單嗎？')) return;
         try {
             await fetch(`/api/orders/${id}`, { method: 'DELETE' });
+            toast.success('訂單已刪除');
             fetchData();
         } catch (error) {
-            console.error('Failed to delete order:', error);
+            toast.error('刪除訂單失敗');
         }
     };
 
@@ -121,34 +133,6 @@ function Orders() {
         const newItems = [...formData.items];
         newItems[index][field] = value;
         setFormData({ ...formData, items: newItems });
-    };
-
-    const formatCurrency = (amount) => {
-        return new Intl.NumberFormat('zh-TW', {
-            style: 'currency',
-            currency: 'TWD',
-            minimumFractionDigits: 0
-        }).format(amount);
-    };
-
-    const getStatusLabel = (status) => {
-        const labels = {
-            pending: '待處理',
-            processing: '處理中',
-            completed: '已完成',
-            cancelled: '已取消'
-        };
-        return labels[status] || status;
-    };
-
-    const formatDate = (dateStr) => {
-        return new Date(dateStr).toLocaleDateString('zh-TW', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
     };
 
     const calculateTotal = () => {
@@ -272,7 +256,7 @@ function Orders() {
                     <div className="modal" style={{ maxWidth: '600px' }} onClick={e => e.stopPropagation()}>
                         <div className="modal-header">
                             <h3 className="modal-title">新增訂單</h3>
-                            <button className="modal-close" onClick={closeModal}>×</button>
+                            <button className="modal-close" onClick={closeModal}>x</button>
                         </div>
                         <form onSubmit={handleSubmit}>
                             <div className="modal-body">

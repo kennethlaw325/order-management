@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
+import { useToast } from '../components/Toast';
 
 function Customers() {
     const [customers, setCustomers] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [search, setSearch] = useState('');
     const [showModal, setShowModal] = useState(false);
     const [editingCustomer, setEditingCustomer] = useState(null);
     const [formData, setFormData] = useState({
@@ -11,6 +13,7 @@ function Customers() {
         phone: '',
         address: ''
     });
+    const toast = useToast();
 
     useEffect(() => {
         fetchCustomers();
@@ -22,7 +25,7 @@ function Customers() {
             const data = await res.json();
             setCustomers(data);
         } catch (error) {
-            console.error('Failed to fetch customers:', error);
+            toast.error('無法載入客戶資料');
         } finally {
             setLoading(false);
         }
@@ -42,10 +45,11 @@ function Customers() {
                 body: JSON.stringify(formData)
             });
 
+            toast.success(editingCustomer ? '客戶資料已更新' : '客戶建立成功');
             fetchCustomers();
             closeModal();
         } catch (error) {
-            console.error('Failed to save customer:', error);
+            toast.error('儲存客戶資料失敗');
         }
     };
 
@@ -53,9 +57,10 @@ function Customers() {
         if (!confirm('確定要刪除此客戶嗎？')) return;
         try {
             await fetch(`/api/customers/${id}`, { method: 'DELETE' });
+            toast.success('客戶已刪除');
             fetchCustomers();
         } catch (error) {
-            console.error('Failed to delete customer:', error);
+            toast.error('刪除客戶失敗');
         }
     };
 
@@ -93,13 +98,27 @@ function Customers() {
             </div>
 
             <div className="toolbar">
+                <input
+                    type="text"
+                    className="form-input search-input"
+                    placeholder="搜尋客戶名稱、Email 或電話..."
+                    value={search}
+                    onChange={e => setSearch(e.target.value)}
+                />
                 <button className="btn btn-primary" onClick={() => openModal()}>
                     ＋ 新增客戶
                 </button>
             </div>
 
             <div className="card">
-                {customers.length > 0 ? (
+                {(() => {
+                    const filtered = customers.filter((c) => {
+                        const q = search.toLowerCase();
+                        return c.name.toLowerCase().includes(q)
+                            || (c.email || '').toLowerCase().includes(q)
+                            || (c.phone || '').toLowerCase().includes(q);
+                    });
+                    if (filtered.length > 0) return (
                     <div className="table-container">
                         <table>
                             <thead>
@@ -113,7 +132,7 @@ function Customers() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {customers.map((customer) => (
+                                {filtered.map((customer) => (
                                     <tr key={customer.id}>
                                         <td style={{ fontWeight: 500, color: 'var(--text-primary)' }}>
                                             {customer.name}
@@ -145,7 +164,8 @@ function Customers() {
                             </tbody>
                         </table>
                     </div>
-                ) : (
+                );
+                    if (customers.length === 0) return (
                     <div className="empty-state">
                         <div className="empty-state-icon">👥</div>
                         <p className="empty-state-text">尚無客戶資料</p>
@@ -153,7 +173,13 @@ function Customers() {
                             新增第一位客戶
                         </button>
                     </div>
-                )}
+                    );
+                    return (
+                    <div className="empty-state">
+                        <p className="empty-state-text">找不到符合的客戶</p>
+                    </div>
+                    );
+                })()}
             </div>
 
             {showModal && (

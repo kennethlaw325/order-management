@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
+import { formatCurrency, getStatusLabel, formatDate } from '../utils';
+import { useToast } from '../components/Toast';
 
 function Dashboard() {
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
+    const toast = useToast();
 
     useEffect(() => {
         fetchStats();
@@ -14,37 +17,10 @@ function Dashboard() {
             const data = await res.json();
             setStats(data);
         } catch (error) {
-            console.error('Failed to fetch stats:', error);
+            toast.error('無法載入統計資料');
         } finally {
             setLoading(false);
         }
-    };
-
-    const formatCurrency = (amount) => {
-        return new Intl.NumberFormat('zh-TW', {
-            style: 'currency',
-            currency: 'TWD',
-            minimumFractionDigits: 0
-        }).format(amount);
-    };
-
-    const getStatusLabel = (status) => {
-        const labels = {
-            pending: '待處理',
-            processing: '處理中',
-            completed: '已完成',
-            cancelled: '已取消'
-        };
-        return labels[status] || status;
-    };
-
-    const formatDate = (dateStr) => {
-        return new Date(dateStr).toLocaleDateString('zh-TW', {
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
     };
 
     if (loading) {
