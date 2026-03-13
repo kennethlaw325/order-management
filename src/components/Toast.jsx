@@ -1,12 +1,11 @@
-import { createContext, useContext, useState, useCallback, useMemo } from 'react';
+import { createContext, useContext, useState, useCallback, useMemo, useEffect } from 'react';
+import { CheckCircle, XCircle, AlertTriangle, X } from 'lucide-react';
 
 const ToastContext = createContext(null);
 
 export function useToast() {
     const context = useContext(ToastContext);
-    if (!context) {
-        throw new Error('useToast must be used within a ToastProvider');
-    }
+    if (!context) throw new Error('useToast must be used within a ToastProvider');
     return context;
 }
 
@@ -24,23 +23,15 @@ export function ToastProvider({ children }) {
     }, []);
 
     const toast = useMemo(() => ({
-        success: (message) => addToast(message, 'success'),
-        error: (message) => addToast(message, 'error'),
-        warning: (message) => addToast(message, 'warning'),
+        success: (msg) => addToast(msg, 'success'),
+        error: (msg) => addToast(msg, 'error'),
+        warning: (msg) => addToast(msg, 'warning'),
     }), [addToast]);
 
     return (
         <ToastContext.Provider value={toast}>
             {children}
-            <div style={{
-                position: 'fixed',
-                bottom: '24px',
-                right: '24px',
-                zIndex: 9999,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '8px',
-            }}>
+            <div className="fixed bottom-6 right-6 z-[9999] flex flex-col gap-2">
                 {toasts.map(t => (
                     <ToastItem key={t.id} toast={t} onClose={() => setToasts(prev => prev.filter(x => x.id !== t.id))} />
                 ))}
@@ -49,54 +40,33 @@ export function ToastProvider({ children }) {
     );
 }
 
-const typeStyles = {
-    success: {
-        background: 'rgba(0, 212, 255, 0.9)',
-        color: '#000',
-    },
-    error: {
-        background: 'rgba(239, 68, 68, 0.9)',
-        color: '#fff',
-    },
-    warning: {
-        background: 'rgba(245, 158, 11, 0.9)',
-        color: '#000',
-    },
+const config = {
+    success: { icon: CheckCircle, cls: 'bg-green-600' },
+    error: { icon: XCircle, cls: 'bg-red-600' },
+    warning: { icon: AlertTriangle, cls: 'bg-yellow-500' },
 };
 
 function ToastItem({ toast, onClose }) {
+    const [visible, setVisible] = useState(false);
+    const { icon: Icon, cls } = config[toast.type] || config.success;
+
+    useEffect(() => {
+        requestAnimationFrame(() => setVisible(true));
+    }, []);
+
     return (
         <div
+            className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-white min-w-[260px] max-w-[400px] shadow-lg ${cls}`}
             style={{
-                padding: '12px 20px',
-                borderRadius: '10px',
-                fontSize: '14px',
-                fontWeight: 500,
-                minWidth: '240px',
-                maxWidth: '400px',
-                boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: '12px',
-                animation: 'slideUp 0.3s ease',
-                ...typeStyles[toast.type],
+                transform: visible ? 'translateY(0)' : 'translateY(12px)',
+                opacity: visible ? 1 : 0,
+                transition: 'transform 0.2s ease, opacity 0.2s ease',
             }}
         >
-            <span>{toast.message}</span>
-            <button
-                onClick={onClose}
-                style={{
-                    background: 'none',
-                    border: 'none',
-                    color: 'inherit',
-                    cursor: 'pointer',
-                    fontSize: '16px',
-                    padding: '0 2px',
-                    opacity: 0.7,
-                }}
-            >
-                x
+            <Icon className="w-4.5 h-4.5" />
+            <span className="flex-1">{toast.message}</span>
+            <button onClick={onClose} className="opacity-70 hover:opacity-100 cursor-pointer bg-transparent border-none text-inherit">
+                <X className="w-4 h-4" />
             </button>
         </div>
     );
