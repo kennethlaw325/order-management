@@ -1,3 +1,6 @@
+import { clsx } from 'clsx';
+export const cn = (...inputs) => clsx(inputs);
+
 export const formatCurrency = (amount) => {
     return new Intl.NumberFormat('zh-TW', {
         style: 'currency',

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Plus, Search, X, Users } from 'lucide-react';
 import { useToast } from '../components/Toast';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Input, Textarea, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui';
 
 function Customers() {
     const [customers, setCustomers] = useState([]);
@@ -47,7 +48,7 @@ function Customers() {
 
     const closeModal = () => { setShowModal(false); setEditingCustomer(null); };
 
-    if (loading) return <div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-2 border-gray-200 border-t-indigo-600 rounded-full animate-spin" /></div>;
+    if (loading) return <div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-2 border-border border-t-primary rounded-full animate-spin" /></div>;
 
     const filtered = customers.filter(c => {
         const q = search.toLowerCase();
@@ -55,105 +56,120 @@ function Customers() {
     });
 
     return (
-        <div>
+        <div className="space-y-6">
             {/* Page Header */}
-            <div className="sm:flex sm:items-center sm:justify-between mb-8">
+            <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">客戶管理</h1>
-                    <p className="mt-1 text-sm text-gray-500">管理您的客戶資料</p>
+                    <h1 className="text-3xl font-bold tracking-tight">客戶管理</h1>
+                    <p className="text-muted-foreground mt-1">管理您的客戶資料</p>
                 </div>
-                <div className="mt-4 sm:mt-0 flex gap-3">
-                    <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <Search className="h-4 w-4 text-gray-400" />
-                        </div>
-                        <input
-                            type="text"
-                            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-colors"
-                            placeholder="搜尋客戶..."
-                            value={search} onChange={e => setSearch(e.target.value)}
-                        />
-                    </div>
-                    <button onClick={() => openModal()} className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
-                        <Plus className="h-4 w-4 mr-2" />
-                        新增客戶
-                    </button>
-                </div>
+                <Button onClick={() => openModal()}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    新增客戶
+                </Button>
+            </div>
+
+            {/* Stats */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">總客戶數</CardTitle>
+                        <Users className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{customers.length}</div>
+                    </CardContent>
+                </Card>
             </div>
 
             {/* Customer Table */}
-            <div className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
-                {filtered.length > 0 ? (
-                    <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
-                                <tr>
-                                    {['客戶名稱', 'Email', '電話', '地址', '訂單數', '操作'].map(h => (
-                                        <th key={h} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{h}</th>
-                                    ))}
-                                </tr>
-                            </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
+            <Card>
+                <CardHeader>
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <CardTitle className="text-base">客戶列表</CardTitle>
+                            <CardDescription>共 {filtered.length} 位客戶</CardDescription>
+                        </div>
+                        <div className="relative w-72">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input placeholder="搜尋客戶..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10" />
+                        </div>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    {filtered.length > 0 ? (
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>客戶名稱</TableHead>
+                                    <TableHead>Email</TableHead>
+                                    <TableHead>電話</TableHead>
+                                    <TableHead>地址</TableHead>
+                                    <TableHead>訂單數</TableHead>
+                                    <TableHead>操作</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
                                 {filtered.map(c => (
-                                    <tr key={c.id} className="hover:bg-gray-50 transition-colors">
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{c.name}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{c.email || '—'}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{c.phone || '—'}</td>
-                                        <td className="px-6 py-4 text-sm text-gray-500 max-w-[200px] truncate">{c.address || '—'}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{c.order_count || 0}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
+                                    <TableRow key={c.id}>
+                                        <TableCell className="font-medium">{c.name}</TableCell>
+                                        <TableCell className="text-muted-foreground">{c.email || '—'}</TableCell>
+                                        <TableCell className="text-muted-foreground">{c.phone || '—'}</TableCell>
+                                        <TableCell className="text-muted-foreground max-w-[200px] truncate">{c.address || '—'}</TableCell>
+                                        <TableCell className="text-muted-foreground">{c.order_count || 0}</TableCell>
+                                        <TableCell>
                                             <div className="flex items-center gap-2">
-                                                <button onClick={() => openModal(c)} className="px-3 py-1.5 rounded-md text-xs font-medium bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 transition-colors">編輯</button>
-                                                <button onClick={() => handleDelete(c.id)} className="px-3 py-1.5 rounded-md text-xs font-medium bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 transition-colors">刪除</button>
+                                                <Button variant="outline" size="sm" onClick={() => openModal(c)}>編輯</Button>
+                                                <Button variant="destructive" size="sm" onClick={() => handleDelete(c.id)}>刪除</Button>
                                             </div>
-                                        </td>
-                                    </tr>
+                                        </TableCell>
+                                    </TableRow>
                                 ))}
-                            </tbody>
-                        </table>
-                    </div>
-                ) : customers.length === 0 ? (
-                    <div className="text-center py-12">
-                        <Users className="mx-auto h-12 w-12 text-gray-300" />
-                        <h3 className="mt-2 text-sm font-medium text-gray-900">尚無客戶資料</h3>
-                        <p className="mt-1 text-sm text-gray-500">點擊上方按鈕新增第一位客戶</p>
-                        <button onClick={() => openModal()} className="mt-4 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition-colors">
-                            新增第一位客戶
-                        </button>
-                    </div>
-                ) : (
-                    <div className="py-12 text-center text-sm text-gray-500">找不到符合的客戶</div>
-                )}
-            </div>
+                            </TableBody>
+                        </Table>
+                    ) : customers.length === 0 ? (
+                        <div className="text-center py-12">
+                            <Users className="mx-auto h-12 w-12 text-muted-foreground/50" />
+                            <h3 className="mt-2 text-sm font-medium">尚無客戶資料</h3>
+                            <p className="mt-1 text-sm text-muted-foreground">點擊上方按鈕新增第一位客戶</p>
+                            <Button onClick={() => openModal()} className="mt-4">新增第一位客戶</Button>
+                        </div>
+                    ) : (
+                        <div className="py-12 text-center text-sm text-muted-foreground">找不到符合的客戶</div>
+                    )}
+                </CardContent>
+            </Card>
 
             {/* Modal */}
             {showModal && (
                 <div className="fixed inset-0 z-[1000] flex items-center justify-center p-5 bg-black/50 backdrop-blur-sm" onClick={closeModal}>
-                    <div className="w-full max-w-md max-h-[90vh] overflow-auto bg-white rounded-lg border border-gray-200 shadow-xl" onClick={e => e.stopPropagation()}>
-                        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-                            <h3 className="text-base font-semibold text-gray-900">{editingCustomer ? '編輯客戶' : '新增客戶'}</h3>
-                            <button onClick={closeModal} className="p-1 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100"><X className="w-5 h-5" /></button>
+                    <div className="w-full max-w-md max-h-[90vh] overflow-auto bg-card rounded-lg border border-border shadow-xl" onClick={e => e.stopPropagation()}>
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+                            <h3 className="text-base font-semibold">{editingCustomer ? '編輯客戶' : '新增客戶'}</h3>
+                            <Button variant="ghost" size="icon" onClick={closeModal} className="h-8 w-8"><X className="w-4 h-4" /></Button>
                         </div>
                         <form onSubmit={handleSubmit}>
                             <div className="px-6 py-5 flex flex-col gap-4">
-                                {[
-                                    { key: 'name', label: '客戶名稱 *', type: 'text', required: true },
-                                    { key: 'email', label: 'Email', type: 'email' },
-                                    { key: 'phone', label: '電話', type: 'text' },
-                                ].map(({ key, label, type, required }) => (
-                                    <div key={key}>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
-                                        <input type={type} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500" value={formData[key]} onChange={e => setFormData({ ...formData, [key]: e.target.value })} required={required} />
-                                    </div>
-                                ))}
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">地址</label>
-                                    <textarea className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm resize-y bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500" style={{ minHeight: '70px' }} value={formData.address} onChange={e => setFormData({ ...formData, address: e.target.value })} />
+                                    <label className="block text-sm font-medium mb-1">客戶名稱 *</label>
+                                    <Input value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} required />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-1">Email</label>
+                                    <Input type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-1">電話</label>
+                                    <Input value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-1">地址</label>
+                                    <Textarea className="min-h-[70px]" value={formData.address} onChange={e => setFormData({ ...formData, address: e.target.value })} />
                                 </div>
                             </div>
-                            <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-200">
-                                <button type="button" onClick={closeModal} className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">取消</button>
-                                <button type="submit" className="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition-colors">{editingCustomer ? '儲存變更' : '建立客戶'}</button>
+                            <div className="flex justify-end gap-3 px-6 py-4 border-t border-border">
+                                <Button type="button" variant="outline" onClick={closeModal}>取消</Button>
+                                <Button type="submit">{editingCustomer ? '儲存變更' : '建立客戶'}</Button>
                             </div>
                         </form>
                     </div>

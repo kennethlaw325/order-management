@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Package, DollarSign, Users, Tag, AlertTriangle, ArrowUpRight, ArrowDownRight } from 'lucide-react';
-import { formatCurrency, getStatusLabel, formatDate } from '../utils';
+import { formatCurrency, formatDate } from '../utils';
 import { useToast } from '../components/Toast';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, Badge, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, StatusBadge } from '../components/ui';
 
 function Dashboard() {
     const [stats, setStats] = useState(null);
@@ -17,7 +18,7 @@ function Dashboard() {
     }, []);
 
     if (loading) {
-        return <div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-2 border-gray-200 border-t-indigo-600 rounded-full animate-spin" /></div>;
+        return <div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-2 border-border border-t-primary rounded-full animate-spin" /></div>;
     }
 
     const statCards = [
@@ -28,115 +29,119 @@ function Dashboard() {
     ];
 
     return (
-        <div>
+        <div className="space-y-6">
             {/* Page Header */}
-            <div className="mb-8">
-                <h1 className="text-2xl font-bold text-gray-900">儀表板</h1>
-                <p className="mt-1 text-sm text-gray-500">訂單系統總覽</p>
+            <div>
+                <h1 className="text-3xl font-bold tracking-tight">儀表板</h1>
+                <p className="text-muted-foreground mt-1">訂單系統總覽</p>
             </div>
 
-            {/* Stats Row */}
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-                {statCards.map(({ label, value, trend, positive }) => (
-                    <div key={label} className="bg-white overflow-hidden rounded-lg border border-gray-200 shadow-sm">
-                        <div className="p-5">
-                            <p className="text-sm font-medium text-gray-500 truncate">{label}</p>
-                            <div className="mt-1 flex items-baseline">
-                                <p className="text-2xl font-semibold text-gray-900">{value}</p>
-                                <p className={`ml-2 flex items-baseline text-sm font-semibold ${positive ? 'text-green-600' : 'text-red-600'}`}>
-                                    {positive ? <ArrowUpRight className="h-4 w-4 mr-0.5" /> : <ArrowDownRight className="h-4 w-4 mr-0.5" />}
-                                    {trend}
-                                </p>
+            {/* KPI Cards */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {statCards.map(({ label, value, icon: Icon, trend, positive }) => (
+                    <Card key={label}>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">{label}</CardTitle>
+                            <Icon className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{value}</div>
+                            <div className="flex items-center text-xs text-muted-foreground">
+                                {positive
+                                    ? <ArrowUpRight className="mr-1 h-3 w-3 text-green-500" />
+                                    : <ArrowDownRight className="mr-1 h-3 w-3 text-red-500" />
+                                }
+                                <span className={positive ? 'text-green-500' : 'text-red-500'}>{trend}</span>
+                                <span className="ml-1">較上週</span>
                             </div>
-                        </div>
-                    </div>
+                        </CardContent>
+                    </Card>
                 ))}
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
+            {/* Body Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Order Status */}
-                <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-5">
-                    <h2 className="text-sm font-semibold text-gray-900 mb-4">訂單狀態</h2>
-                    <div className="flex flex-col gap-3">
-                        {[
-                            { status: 'pending', label: '待處理' },
-                            { status: 'processing', label: '處理中' },
-                            { status: 'completed', label: '已完成' },
-                            { status: 'cancelled', label: '已取消' },
-                        ].map(({ status, label }) => (
-                            <div key={status} className="flex items-center justify-between">
-                                <StatusBadge status={status} />
-                                <span className="text-sm font-semibold text-gray-900">{stats?.orders?.[status] || 0}</span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-base">訂單狀態</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="flex flex-col gap-3">
+                            {[
+                                { status: 'pending', label: '待處理', cls: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300' },
+                                { status: 'processing', label: '處理中', cls: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300' },
+                                { status: 'completed', label: '已完成', cls: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' },
+                                { status: 'cancelled', label: '已取消', cls: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300' },
+                            ].map(({ status, label, cls }) => (
+                                <div key={status} className="flex items-center justify-between">
+                                    <Badge className={cls}>{label}</Badge>
+                                    <span className="text-sm font-semibold">{stats?.orders?.[status] || 0}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
 
                 {/* Stock Alert */}
-                <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-5">
-                    <h2 className="text-sm font-semibold text-gray-900 mb-4">庫存警示</h2>
-                    {stats?.products?.low_stock > 0 ? (
-                        <div className="flex items-center gap-3 p-4 rounded-lg bg-yellow-50 border border-yellow-200">
-                            <AlertTriangle className="w-5 h-5 text-yellow-600" />
-                            <div>
-                                <div className="text-sm font-semibold text-yellow-800">{stats.products.low_stock} 件商品庫存不足</div>
-                                <div className="text-xs text-yellow-600">庫存低於 10 件</div>
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-base flex items-center gap-2">
+                            <AlertTriangle className="h-5 w-5 text-yellow-500" />
+                            庫存警示
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        {stats?.products?.low_stock > 0 ? (
+                            <div className="flex items-center gap-3 p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
+                                <div>
+                                    <div className="text-sm font-semibold">{stats.products.low_stock} 件商品庫存不足</div>
+                                    <div className="text-xs text-muted-foreground">庫存低於 10 件</div>
+                                </div>
                             </div>
-                        </div>
-                    ) : (
-                        <div className="text-center py-6 text-sm text-gray-500">所有商品庫存充足</div>
-                    )}
-                </div>
+                        ) : (
+                            <div className="text-center py-6 text-sm text-muted-foreground">所有商品庫存充足</div>
+                        )}
+                    </CardContent>
+                </Card>
             </div>
 
             {/* Recent Orders */}
-            <div className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
-                <div className="px-5 py-4 border-b border-gray-200">
-                    <h2 className="text-sm font-semibold text-gray-900">近期訂單</h2>
-                </div>
-                {stats?.recentOrders?.length > 0 ? (
-                    <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
-                                <tr>
-                                    {['訂單編號', '客戶', '金額', '狀態', '時間'].map(h => (
-                                        <th key={h} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{h}</th>
-                                    ))}
-                                </tr>
-                            </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
+            <Card>
+                <CardHeader>
+                    <CardTitle className="text-base">近期訂單</CardTitle>
+                    <CardDescription>最近的訂單記錄</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    {stats?.recentOrders?.length > 0 ? (
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>訂單編號</TableHead>
+                                    <TableHead>客戶</TableHead>
+                                    <TableHead>金額</TableHead>
+                                    <TableHead>狀態</TableHead>
+                                    <TableHead>時間</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
                                 {stats.recentOrders.map(order => (
-                                    <tr key={order.id} className="hover:bg-gray-50 transition-colors">
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-indigo-600">#{String(order.id).padStart(4, '0')}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{order.customer_name || '—'}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{formatCurrency(order.total)}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap"><StatusBadge status={order.status} /></td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatDate(order.created_at)}</td>
-                                    </tr>
+                                    <TableRow key={order.id}>
+                                        <TableCell className="font-medium text-primary">#{String(order.id).padStart(4, '0')}</TableCell>
+                                        <TableCell className="text-muted-foreground">{order.customer_name || '—'}</TableCell>
+                                        <TableCell className="font-medium">{formatCurrency(order.total)}</TableCell>
+                                        <TableCell><StatusBadge status={order.status} /></TableCell>
+                                        <TableCell className="text-muted-foreground">{formatDate(order.created_at)}</TableCell>
+                                    </TableRow>
                                 ))}
-                            </tbody>
-                        </table>
-                    </div>
-                ) : (
-                    <div className="py-12 text-center text-sm text-gray-500">尚無訂單記錄</div>
-                )}
-            </div>
+                            </TableBody>
+                        </Table>
+                    ) : (
+                        <div className="py-12 text-center text-sm text-muted-foreground">尚無訂單記錄</div>
+                    )}
+                </CardContent>
+            </Card>
         </div>
-    );
-}
-
-function StatusBadge({ status }) {
-    const styles = {
-        pending: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-        processing: 'bg-blue-100 text-blue-800 border-blue-200',
-        completed: 'bg-green-100 text-green-800 border-green-200',
-        cancelled: 'bg-red-100 text-red-800 border-red-200',
-    };
-    const labels = { pending: '待處理', processing: '處理中', completed: '已完成', cancelled: '已取消' };
-    return (
-        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${styles[status] || styles.pending}`}>
-            {labels[status] || status}
-        </span>
     );
 }
 

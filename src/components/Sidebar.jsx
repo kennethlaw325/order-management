@@ -1,5 +1,7 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, ShoppingCart, Users, Package, Settings } from 'lucide-react';
+import { LayoutDashboard, ShoppingCart, Users, Package, Settings, ChevronLeft, ChevronRight } from 'lucide-react';
+import { cn } from '../utils';
+import { Button } from './ui';
 
 const navItems = [
     { path: '/', icon: LayoutDashboard, label: '儀表板' },
@@ -8,42 +10,63 @@ const navItems = [
     { path: '/products', icon: Package, label: '產品管理' },
 ];
 
-function Sidebar() {
+function Sidebar({ collapsed, onToggle }) {
     return (
-        <aside className="w-64 bg-white border-r border-gray-200 flex-col hidden md:flex">
-            <div className="h-16 flex items-center px-6 border-b border-gray-200">
-                <div className="flex items-center gap-2 text-indigo-600">
-                    <Package className="w-6 h-6" />
-                    <span className="text-lg font-bold tracking-tight text-gray-900">OMS Pro</span>
-                </div>
+        <aside className={cn(
+            'fixed left-0 top-0 z-40 h-screen bg-card border-r border-border transition-all duration-300 flex flex-col',
+            collapsed ? 'w-16' : 'w-64'
+        )}>
+            {/* Logo */}
+            <div className="h-16 flex items-center justify-between px-4 border-b border-border">
+                {!collapsed && (
+                    <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                            <LayoutDashboard className="w-5 h-5 text-primary-foreground" />
+                        </div>
+                        <span className="font-bold text-lg">OMS Pro</span>
+                    </div>
+                )}
+                {collapsed && (
+                    <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center mx-auto">
+                        <LayoutDashboard className="w-5 h-5 text-primary-foreground" />
+                    </div>
+                )}
+                <Button variant="ghost" size="icon" onClick={onToggle} className={cn('h-8 w-8', collapsed && 'absolute -right-4 top-5 bg-card border shadow-sm')}>
+                    {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+                </Button>
             </div>
-            <nav className="flex-1 py-4 px-3 space-y-1 overflow-y-auto">
+
+            {/* Navigation */}
+            <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
                 {navItems.map(({ path, icon: Icon, label }) => (
                     <NavLink
                         key={path}
                         to={path}
                         end={path === '/'}
-                        className={({ isActive }) =>
-                            `w-full flex items-center gap-3 px-3 py-2.5 rounded-md transition-colors ${
-                                isActive
-                                    ? 'bg-indigo-50 text-indigo-700 font-medium'
-                                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                            }`
-                        }
+                        className={({ isActive }) => cn(
+                            'w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors',
+                            isActive ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground hover:bg-accent',
+                            collapsed && 'justify-center px-2'
+                        )}
                     >
                         {({ isActive }) => (
                             <>
-                                <Icon className={`w-5 h-5 ${isActive ? 'text-indigo-600' : 'text-gray-400'}`} />
-                                <span className="text-sm">{label}</span>
+                                <Icon className={cn('w-5 h-5 flex-shrink-0', isActive && 'text-primary')} />
+                                {!collapsed && <span>{label}</span>}
                             </>
                         )}
                     </NavLink>
                 ))}
             </nav>
-            <div className="p-4 border-t border-gray-200">
-                <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors">
-                    <Settings className="w-5 h-5 text-gray-400" />
-                    <span className="text-sm">設定</span>
+
+            {/* Settings */}
+            <div className={cn('p-2 border-t border-border', collapsed && 'flex justify-center')}>
+                <button className={cn(
+                    'w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors',
+                    collapsed && 'justify-center px-2 w-auto'
+                )}>
+                    <Settings className="w-5 h-5" />
+                    {!collapsed && <span>設定</span>}
                 </button>
             </div>
         </aside>

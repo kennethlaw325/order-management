@@ -41,9 +41,9 @@ export function ToastProvider({ children }) {
 }
 
 const config = {
-    success: { icon: CheckCircle, cls: 'bg-green-600' },
-    error: { icon: XCircle, cls: 'bg-red-600' },
-    warning: { icon: AlertTriangle, cls: 'bg-yellow-500' },
+    success: { icon: CheckCircle, cls: 'bg-green-600 dark:bg-green-700' },
+    error: { icon: XCircle, cls: 'bg-destructive' },
+    warning: { icon: AlertTriangle, cls: 'bg-yellow-500 dark:bg-yellow-600' },
 };
 
 function ToastItem({ toast, onClose }) {
