@@ -5,9 +5,11 @@ import { useCartStore } from "@/store/cart";
 
 interface CartPanelProps {
   onCheckout: (paymentMethod: string) => void;
+  discountOpen?: boolean;
+  onDiscountOpenChange?: (open: boolean) => void;
 }
 
-export function CartPanel({ onCheckout }: CartPanelProps) {
+export function CartPanel({ onCheckout, discountOpen, onDiscountOpenChange }: CartPanelProps) {
   const items = useCartStore((s) => s.items);
   const discount = useCartStore((s) => s.discount);
   const updateQuantity = useCartStore((s) => s.updateQuantity);
@@ -16,9 +18,20 @@ export function CartPanel({ onCheckout }: CartPanelProps) {
   const clear = useCartStore((s) => s.clear);
   const getSubtotal = useCartStore((s) => s.getSubtotal);
 
-  const [showDiscount, setShowDiscount] = useState(false);
+  const [showDiscountLocal, setShowDiscountLocal] = useState(false);
+  const showDiscount = discountOpen !== undefined ? discountOpen : showDiscountLocal;
+  const setShowDiscount = (open: boolean) => {
+    setShowDiscountLocal(open);
+    onDiscountOpenChange?.(open);
+  };
   const [discountInput, setDiscountInput] = useState("");
   const [taxRate, setTaxRate] = useState(0);
+
+  useEffect(() => {
+    if (discountOpen !== undefined) {
+      setShowDiscountLocal(discountOpen);
+    }
+  }, [discountOpen]);
 
   useEffect(() => {
     try {

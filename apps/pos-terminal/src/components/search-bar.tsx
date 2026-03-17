@@ -1,11 +1,14 @@
 "use client";
 
+import { forwardRef } from "react";
+
 interface SearchBarProps {
   value: string;
   onChange: (value: string) => void;
 }
 
-export function SearchBar({ value, onChange }: SearchBarProps) {
+export const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(
+  function SearchBar({ value, onChange }, ref) {
   return (
     <div className="relative">
       <svg
@@ -22,6 +25,7 @@ export function SearchBar({ value, onChange }: SearchBarProps) {
         />
       </svg>
       <input
+        ref={ref}
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -40,4 +44,4 @@ export function SearchBar({ value, onChange }: SearchBarProps) {
       )}
     </div>
   );
-}
+});

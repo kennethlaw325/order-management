@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { SearchBar } from "@/components/search-bar";
 import { CategoryTabs } from "@/components/category-tabs";
@@ -35,6 +35,8 @@ export default function PosPage() {
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [checkoutPayment, setCheckoutPayment] = useState<string | null>(null);
   const [completedOrder, setCompletedOrder] = useState<any>(null);
+  const [discountOpen, setDiscountOpen] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const time = useClock();
 
   const userName = session?.user?.name || session?.user?.email || "Cashier";
@@ -54,6 +56,34 @@ export default function PosPage() {
     useCartStore.getState().clear();
   }, []);
 
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      switch (e.key) {
+        case "F1":
+          e.preventDefault();
+          searchInputRef.current?.focus();
+          break;
+        case "F2":
+          e.preventDefault();
+          setDiscountOpen((prev) => !prev);
+          break;
+        case "F3":
+          e.preventDefault();
+          if (useCartStore.getState().items.length > 0) {
+            handleCheckout("CASH");
+          }
+          break;
+        case "Escape":
+          e.preventDefault();
+          useCartStore.getState().clear();
+          break;
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleCheckout]);
+
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
@@ -72,7 +102,7 @@ export default function PosPage() {
       <div className="flex flex-1 overflow-hidden">
         {/* Left: Products */}
         <div className="flex-[3] flex flex-col p-4 gap-3 overflow-hidden">
-          <SearchBar value={search} onChange={setSearch} />
+          <SearchBar ref={searchInputRef} value={search} onChange={setSearch} />
           <CategoryTabs selected={categoryId} onSelect={setCategoryId} />
           <div className="flex-1 overflow-y-auto">
             <ProductGrid search={debouncedSearch} categoryId={categoryId} />
@@ -81,8 +111,16 @@ export default function PosPage() {
 
         {/* Right: Cart */}
         <div className="flex-[2] p-4 pl-0">
-          <CartPanel onCheckout={handleCheckout} />
+          <CartPanel onCheckout={handleCheckout} discountOpen={discountOpen} onDiscountOpenChange={setDiscountOpen} />
         </div>
+      </div>
+
+      {/* Keyboard shortcut hints */}
+      <div className="px-6 py-1.5 bg-gray-100 border-t border-gray-200 text-xs text-gray-400 flex gap-4">
+        <span>F1: Search</span>
+        <span>F2: Discount</span>
+        <span>F3: Checkout</span>
+        <span>ESC: Clear</span>
       </div>
 
       {/* Dialogs */}
