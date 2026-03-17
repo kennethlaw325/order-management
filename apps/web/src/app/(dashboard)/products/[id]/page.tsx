@@ -85,7 +85,7 @@ export default function ProductFormPage() {
     }
   };
 
-  const isSaving = createMutation.isLoading || updateMutation.isLoading;
+  const isSaving = createMutation.isPending || updateMutation.isPending;
 
   if (!isNew && existing.isLoading) {
     return (

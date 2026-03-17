@@ -26,7 +26,7 @@ export default function InventoryPage() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [lowStockOnly, setLowStockOnly] = useState(false);
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
-  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+  const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   // Set storeId from session once available
   useEffect(() => {
@@ -48,7 +48,7 @@ export default function InventoryPage() {
   const inventory = trpc.inventory.list.useQuery(
     {
       storeId,
-      lowStockOnly: lowStockOnly || undefined,
+      lowStockOnly,
       search: debouncedSearch || undefined,
     },
     { enabled: !!storeId }
@@ -124,14 +124,14 @@ export default function InventoryPage() {
                   </td>
                 </tr>
               )}
-              {storeId && !inventory.isLoading && inventory.data?.length === 0 && (
+              {storeId && !inventory.isLoading && (inventory.data as any[])?.length === 0 && (
                 <tr>
                   <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
                     No inventory items found
                   </td>
                 </tr>
               )}
-              {inventory.data?.map((item: InventoryItem) => {
+              {(inventory.data as InventoryItem[] | undefined)?.map((item: InventoryItem) => {
                 const isLow = item.quantity <= item.lowStockThreshold;
                 return (
                   <tr

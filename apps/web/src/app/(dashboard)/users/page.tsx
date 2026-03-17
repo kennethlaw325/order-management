@@ -86,7 +86,7 @@ export default function UsersPage() {
         name: form.name,
         email: form.email,
         password: form.password || undefined,
-        role: form.role,
+        role: form.role as "admin" | "manager" | "cashier",
         storeId: storeId ?? null,
       });
     } else {
@@ -94,7 +94,7 @@ export default function UsersPage() {
         name: form.name,
         email: form.email,
         password: form.password,
-        role: form.role,
+        role: form.role as "admin" | "manager" | "cashier",
         storeId,
       });
     }
