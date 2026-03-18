@@ -1,5 +1,5 @@
 import { Search, Tag } from 'lucide-react';
-import { formatCurrency } from '../../utils';
+import { useFormatCurrency } from '../../utils';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Input, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../../components/ui';
 
 const getStockStatus = (stock) => {
@@ -9,6 +9,7 @@ const getStockStatus = (stock) => {
 };
 
 function ProductTable({ products, search, onSearchChange, onEdit, onDelete, onCreateClick }) {
+    const formatCurrency = useFormatCurrency();
     const filtered = products.filter(p => {
         const q = search.toLowerCase();
         return p.name.toLowerCase().includes(q) || (p.description || '').toLowerCase().includes(q);

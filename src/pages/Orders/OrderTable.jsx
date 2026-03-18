@@ -1,8 +1,9 @@
 import { Trash2, Package } from 'lucide-react';
-import { formatCurrency, formatDate } from '../../utils';
+import { formatDate, useFormatCurrency } from '../../utils';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, StatusBadge } from '../../components/ui';
 
 function OrderTable({ orders, onUpdateStatus, onDelete, onCreateClick }) {
+    const formatCurrency = useFormatCurrency();
     return (
         <Card>
             <CardHeader>
@@ -14,12 +15,12 @@ function OrderTable({ orders, onUpdateStatus, onDelete, onCreateClick }) {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>訂單編號</TableHead>
-                                <TableHead>客戶</TableHead>
-                                <TableHead>金額</TableHead>
-                                <TableHead>狀態</TableHead>
-                                <TableHead>建立時間</TableHead>
-                                <TableHead>操作</TableHead>
+                                <TableHead className="w-[100px]">訂單編號</TableHead>
+                                <TableHead className="w-[140px]">客戶</TableHead>
+                                <TableHead className="w-[120px]">金額</TableHead>
+                                <TableHead className="w-[100px]">狀態</TableHead>
+                                <TableHead className="w-[140px]">建立時間</TableHead>
+                                <TableHead className="w-[200px]">操作</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>

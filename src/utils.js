@@ -1,10 +1,20 @@
 import { clsx } from 'clsx';
+import { useSettings } from './contexts/SettingsContext';
+
 export const cn = (...inputs) => clsx(inputs);
 
-export const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('zh-TW', {
+// Hook version — triggers re-render when currency changes
+export function useFormatCurrency() {
+    const { currency } = useSettings();
+    return (amount) => formatCurrency(amount, currency);
+}
+
+export const formatCurrency = (amount, currencyCode) => {
+    const currency = currencyCode || localStorage.getItem('currency') || 'TWD';
+    const localeMap = { TWD: 'zh-TW', HKD: 'zh-HK', USD: 'en-US', CNY: 'zh-CN' };
+    return new Intl.NumberFormat(localeMap[currency] || 'zh-TW', {
         style: 'currency',
-        currency: 'TWD',
+        currency,
         minimumFractionDigits: 0
     }).format(amount);
 };

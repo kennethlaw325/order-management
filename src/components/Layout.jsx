@@ -6,18 +6,20 @@ import { ToastProvider } from './Toast';
 import { Bell, Sun, Moon } from 'lucide-react';
 import { cn } from '../utils';
 import { Button } from './ui';
+import { useSettings } from '../contexts/SettingsContext';
 
 const PAGE_TITLES = {
     '/': { title: '儀表板', subtitle: '訂單管理系統總覽' },
     '/orders': { title: '訂單管理', subtitle: '管理所有訂單及狀態' },
     '/customers': { title: '客戶管理', subtitle: '管理客戶資訊及聯絡方式' },
     '/products': { title: '產品管理', subtitle: '管理產品目錄及庫存' },
+    '/settings': { title: '設定', subtitle: '系統及個人偏好設定' },
 };
 
 function Layout() {
     const location = useLocation();
+    const { darkMode, setDarkMode } = useSettings();
     const [sidebarCollapsed, setSidebarCollapsed] = useState(() => localStorage.getItem('sidebarCollapsed') === 'true');
-    const [darkMode, setDarkMode] = useState(() => localStorage.getItem('theme') === 'dark');
     const [badgeCounts, setBadgeCounts] = useState({ pendingOrders: 0, lowStock: 0 });
 
     useEffect(() => {
@@ -27,7 +29,7 @@ function Layout() {
                 pendingOrders: data?.orders?.pending || 0,
                 lowStock: data?.products?.low_stock || 0,
             }))
-            .catch(() => {}); // silent fail — badges are optional
+            .catch(() => {});
     }, []);
 
     const pageInfo = PAGE_TITLES[location.pathname] || PAGE_TITLES['/'];
@@ -35,11 +37,6 @@ function Layout() {
     useEffect(() => {
         localStorage.setItem('sidebarCollapsed', sidebarCollapsed);
     }, [sidebarCollapsed]);
-
-    useEffect(() => {
-        document.documentElement.classList.toggle('dark', darkMode);
-        localStorage.setItem('theme', darkMode ? 'dark' : 'light');
-    }, [darkMode]);
 
     return (
         <div className="min-h-screen bg-background flex">
@@ -62,10 +59,6 @@ function Layout() {
                             <Bell className="h-5 w-5" />
                             <span className="absolute top-1.5 right-1.5 block h-2 w-2 rounded-full bg-destructive ring-2 ring-card" />
                         </Button>
-                        <div className="h-8 w-px bg-border mx-1" />
-                        <div className="h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold text-xs cursor-pointer">
-                            KL
-                        </div>
                     </div>
                 </header>
 

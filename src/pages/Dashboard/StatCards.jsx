@@ -1,6 +1,7 @@
 // src/pages/Dashboard/StatCards.jsx
 import { useEffect, useRef } from 'react';
 import { Package, DollarSign, Users, Tag, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { useFormatCurrency } from '../../utils';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui';
 
 function useCountUp(target, duration = 800) {
@@ -46,7 +47,7 @@ function TrendBadge({ trend }) {
     );
 }
 
-function StatCard({ label, value, icon: Icon, trend, iconBg = 'bg-indigo-50 dark:bg-indigo-950/50', iconColor = 'text-indigo-600 dark:text-indigo-400' }) {
+function StatCard({ label, value, icon: Icon, trend, iconBg = 'bg-indigo-600 dark:bg-indigo-500', iconColor = 'text-white' }) {
     const countRef = useCountUp(value);
     return (
         <Card>
@@ -67,10 +68,11 @@ function StatCard({ label, value, icon: Icon, trend, iconBg = 'bg-indigo-50 dark
 }
 
 function StatCards({ stats }) {
+    const fmt = useFormatCurrency();
     const trends = stats?.trends || {};
     const cards = [
         { label: '總訂單數', value: stats?.orders?.total || 0, icon: Package, trend: trends.orders },
-        { label: '總收入（已完成）', value: `NT$${(stats?.revenue || 0).toLocaleString()}`, icon: DollarSign, trend: trends.revenue },
+        { label: '總收入（已完成）', value: fmt(stats?.revenue || 0), icon: DollarSign, trend: trends.revenue },
         { label: '客戶數', value: stats?.customers || 0, icon: Users, trend: trends.customers },
         { label: '產品數', value: stats?.products?.total || 0, icon: Tag, trend: null },
     ];

@@ -1,8 +1,9 @@
 import { X } from 'lucide-react';
-import { formatCurrency } from '../../utils';
+import { useFormatCurrency } from '../../utils';
 import { Button, Input, Select, Textarea } from '../../components/ui';
 
 function CreateOrderModal({ formData, setFormData, customers, products, onSubmit, onClose, onAddItem, onRemoveItem, onUpdateItem }) {
+    const formatCurrency = useFormatCurrency();
     const total = formData.items.reduce((s, i) => {
         const p = products.find(x => x.id === parseInt(i.product_id));
         return s + (p ? p.price * i.quantity : 0);

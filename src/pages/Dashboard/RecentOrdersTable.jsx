@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom';
-import { formatCurrency, formatDate } from '../../utils';
+import { formatDate, useFormatCurrency } from '../../utils';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, StatusBadge } from '../../components/ui';
 
 function RecentOrdersTable({ orders }) {
+    const formatCurrency = useFormatCurrency();
     return (
         <Card>
             <CardHeader className="flex flex-row items-center justify-between">

@@ -3,7 +3,7 @@ import { cn } from '../../utils';
 export function Table({ className, ...props }) {
     return (
         <div className="relative w-full overflow-auto">
-            <table className={cn('w-full caption-bottom text-sm', className)} {...props} />
+            <table className={cn('w-full table-fixed caption-bottom text-sm', className)} {...props} />
         </div>
     );
 }
