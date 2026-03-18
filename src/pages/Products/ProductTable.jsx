@@ -1,6 +1,12 @@
-import { Search, Tag, AlertTriangle } from 'lucide-react';
+import { Search, Tag } from 'lucide-react';
 import { formatCurrency } from '../../utils';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Badge, Input, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../../components/ui';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Input, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../../components/ui';
+
+const getStockStatus = (stock) => {
+    if (stock < 5) return { label: '極低', dot: 'bg-red-500', text: 'text-red-600 dark:text-red-400' };
+    if (stock < 10) return { label: '偏低', dot: 'bg-amber-500', text: 'text-amber-600 dark:text-amber-400' };
+    return { label: '正常', dot: 'bg-emerald-500', text: 'text-emerald-600 dark:text-emerald-400' };
+};
 
 function ProductTable({ products, search, onSearchChange, onEdit, onDelete, onCreateClick }) {
     const filtered = products.filter(p => {
@@ -41,13 +47,18 @@ function ProductTable({ products, search, onSearchChange, onEdit, onDelete, onCr
                                     <TableCell className="text-muted-foreground max-w-[250px] truncate">{p.description || '—'}</TableCell>
                                     <TableCell className="font-medium">{formatCurrency(p.price)}</TableCell>
                                     <TableCell>
-                                        {p.stock < 10 ? (
-                                            <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300">
-                                                <AlertTriangle className="w-3 h-3 mr-1" /> {p.stock}
-                                            </Badge>
-                                        ) : (
-                                            <span className="text-muted-foreground">{p.stock}</span>
-                                        )}
+                                        {(() => {
+                                            const stockStatus = getStockStatus(p.stock);
+                                            return (
+                                                <div className="flex items-center gap-2">
+                                                    <span>{p.stock}</span>
+                                                    <span className={`inline-flex items-center gap-1 text-xs ${stockStatus.text}`}>
+                                                        <span className={`w-1.5 h-1.5 rounded-full ${stockStatus.dot}`} />
+                                                        {stockStatus.label}
+                                                    </span>
+                                                </div>
+                                            );
+                                        })()}
                                     </TableCell>
                                     <TableCell>
                                         <div className="flex items-center gap-2">
