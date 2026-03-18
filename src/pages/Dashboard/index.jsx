@@ -23,10 +23,6 @@ function Dashboard() {
 
     return (
         <div className="space-y-6">
-            <div>
-                <h1 className="text-3xl font-bold tracking-tight">儀表板</h1>
-                <p className="text-muted-foreground mt-1">訂單系統總覽</p>
-            </div>
             <StatCards stats={stats} />
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <OrderStatusCard orders={stats?.orders} />

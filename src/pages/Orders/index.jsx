@@ -68,11 +68,7 @@ function Orders() {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">訂單管理</h1>
-                    <p className="text-muted-foreground mt-1">管理與追蹤您的訂單</p>
-                </div>
+            <div className="flex justify-end">
                 <Button onClick={openModal}><Plus className="h-4 w-4 mr-2" />新增訂單</Button>
             </div>
             <OrderFilters statusFilter={statusFilter} onFilterChange={setStatusFilter} />
