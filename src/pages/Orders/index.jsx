@@ -14,6 +14,8 @@ function Orders() {
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [statusFilter, setStatusFilter] = useState('');
+    const [search, setSearch] = useState('');
+    const [deleteConfirm, setDeleteConfirm] = useState(null);
     const [formData, setFormData] = useState({ customer_id: '', notes: '', items: [{ product_id: '', quantity: 1 }] });
     const toast = useToast();
 
@@ -53,16 +55,28 @@ function Orders() {
         } catch { toast.error('更新狀態失敗'); }
     };
 
-    const handleDelete = async (id) => {
-        if (!confirm('確定要刪除此訂單嗎？')) return;
-        try { await fetch(`/api/orders/${id}`, { method: 'DELETE' }); toast.success('訂單已刪除'); fetchData(); }
-        catch { toast.error('刪除訂單失敗'); }
+    const handleDelete = (id) => setDeleteConfirm(id);
+
+    const confirmDelete = async () => {
+        if (!deleteConfirm) return;
+        try {
+            await fetch(`/api/orders/${deleteConfirm}`, { method: 'DELETE' });
+            toast.success('訂單已刪除');
+            fetchData();
+        } catch { toast.error('刪除訂單失敗'); }
+        finally { setDeleteConfirm(null); }
     };
 
     const openModal = () => { setFormData({ customer_id: '', notes: '', items: [{ product_id: '', quantity: 1 }] }); setShowModal(true); };
     const addItem = () => setFormData({ ...formData, items: [...formData.items, { product_id: '', quantity: 1 }] });
     const removeItem = (i) => { if (formData.items.length > 1) setFormData({ ...formData, items: formData.items.filter((_, idx) => idx !== i) }); };
     const updateItem = (i, field, value) => { const items = [...formData.items]; items[i][field] = value; setFormData({ ...formData, items }); };
+
+    const filteredOrders = orders.filter(o => {
+        if (!search) return true;
+        const q = search.toLowerCase();
+        return o.customer_name?.toLowerCase().includes(q) || String(o.id).padStart(4, '0').includes(q);
+    });
 
     if (loading) return <LoadingSpinner />;
 
@@ -71,8 +85,14 @@ function Orders() {
             <div className="flex justify-end">
                 <Button onClick={openModal}><Plus className="h-4 w-4 mr-2" />新增訂單</Button>
             </div>
-            <OrderFilters statusFilter={statusFilter} onFilterChange={setStatusFilter} />
-            <OrderTable orders={orders} onUpdateStatus={updateStatus} onDelete={handleDelete} onCreateClick={openModal} />
+            <OrderFilters
+                statusFilter={statusFilter}
+                onFilterChange={(status) => { setStatusFilter(status); setSearch(''); }}
+                search={search}
+                onSearchChange={setSearch}
+                orders={orders}
+            />
+            <OrderTable orders={filteredOrders} onUpdateStatus={updateStatus} onDelete={handleDelete} onCreateClick={openModal} />
             {showModal && (
                 <CreateOrderModal
                     formData={formData}
@@ -85,6 +105,25 @@ function Orders() {
                     onRemoveItem={removeItem}
                     onUpdateItem={updateItem}
                 />
+            )}
+            {deleteConfirm && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+                    <div className="bg-card rounded-xl shadow-2xl p-6 w-full max-w-sm mx-4">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-950/50 flex items-center justify-center flex-shrink-0">
+                                <span className="text-red-500 text-lg">!</span>
+                            </div>
+                            <div>
+                                <h3 className="font-semibold">確定要刪除訂單？</h3>
+                                <p className="text-sm text-muted-foreground mt-0.5">此操作無法復原。</p>
+                            </div>
+                        </div>
+                        <div className="flex gap-2 justify-end">
+                            <button onClick={() => setDeleteConfirm(null)} className="px-4 py-2 text-sm rounded-[var(--radius)] border border-input hover:bg-accent transition-colors cursor-pointer">取消</button>
+                            <button onClick={confirmDelete} className="px-4 py-2 text-sm rounded-[var(--radius)] bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors cursor-pointer">確認刪除</button>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );
