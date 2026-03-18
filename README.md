@@ -16,7 +16,7 @@
 | 層級 | 技術 |
 |------|------|
 | 前端 | React + Vite |
-| 樣式 | Vanilla CSS (深色主題) |
+| 樣式 | Tailwind CSS v4 + Zinc/Indigo design system (light/dark) |
 | 後端 | Node.js + Express |
 | 資料庫 | SQLite |
 
