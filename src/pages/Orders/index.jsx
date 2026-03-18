@@ -108,7 +108,7 @@ function Orders() {
             )}
             {deleteConfirm && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-                    <div className="bg-card rounded-xl shadow-2xl p-6 w-full max-w-sm mx-4">
+                    <div className="bg-card rounded-xl shadow-2xl p-6 w-full max-w-sm mx-4 animate-modal-in">
                         <div className="flex items-center gap-3 mb-4">
                             <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-950/50 flex items-center justify-center flex-shrink-0">
                                 <span className="text-red-500 text-lg">!</span>

@@ -10,7 +10,7 @@ function CreateOrderModal({ formData, setFormData, customers, products, onSubmit
 
     return (
         <div className="fixed inset-0 z-[1000] flex items-center justify-center p-5 bg-black/50 backdrop-blur-sm" onClick={onClose}>
-            <div className="w-full max-w-xl max-h-[90vh] overflow-auto bg-card rounded-lg border border-border shadow-xl" onClick={e => e.stopPropagation()}>
+            <div className="w-full max-w-xl max-h-[90vh] overflow-auto bg-card rounded-lg border border-border shadow-xl animate-modal-in" onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between px-6 py-4 border-b border-border">
                     <h3 className="text-base font-semibold">新增訂單</h3>
                     <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8"><X className="w-4 h-4" /></Button>
