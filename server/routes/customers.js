@@ -7,12 +7,35 @@ const router = express.Router();
 router.get('/', (req, res) => {
     try {
         const customers = db.prepare(`
-      SELECT c.*, 
-        (SELECT COUNT(*) FROM orders WHERE customer_id = c.id) as order_count
-      FROM customers c
-      ORDER BY c.created_at DESC
-    `).all();
+            SELECT c.*, COUNT(o.id) as order_count
+            FROM customers c
+            LEFT JOIN orders o ON o.customer_id = c.id
+            GROUP BY c.id
+            ORDER BY c.created_at DESC
+        `).all();
         res.json(customers);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Get customer orders
+router.get('/:id/orders', (req, res) => {
+    try {
+        const customer = db.prepare('SELECT * FROM customers WHERE id = ?').get(req.params.id);
+        if (!customer) return res.status(404).json({ error: 'Customer not found' });
+
+        const orders = db.prepare(`
+            SELECT o.id, o.status, o.total, o.created_at, o.notes,
+                   COUNT(oi.id) as item_count
+            FROM orders o
+            LEFT JOIN order_items oi ON o.id = oi.order_id
+            WHERE o.customer_id = ?
+            GROUP BY o.id
+            ORDER BY o.created_at DESC
+        `).all(req.params.id);
+
+        res.json({ customer, orders });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

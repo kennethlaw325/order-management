@@ -1,6 +1,8 @@
 import { Search, Users } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Input, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../../components/ui';
 
+const getInitials = (name) => name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || '?';
+
 function CustomerTable({ customers, search, onSearchChange, onEdit, onDelete, onCreateClick }) {
     const filtered = customers.filter(c => {
         const q = search.toLowerCase();
@@ -30,18 +32,25 @@ function CustomerTable({ customers, search, onSearchChange, onEdit, onDelete, on
                                 <TableHead>Email</TableHead>
                                 <TableHead>電話</TableHead>
                                 <TableHead>地址</TableHead>
-                                <TableHead>訂單數</TableHead>
+                                <TableHead className="text-center">訂單數</TableHead>
                                 <TableHead>操作</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {filtered.map(c => (
                                 <TableRow key={c.id}>
-                                    <TableCell className="font-medium">{c.name}</TableCell>
+                                    <TableCell>
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 flex items-center justify-center text-xs font-semibold flex-shrink-0">
+                                                {getInitials(c.name)}
+                                            </div>
+                                            <span className="font-medium">{c.name}</span>
+                                        </div>
+                                    </TableCell>
                                     <TableCell className="text-muted-foreground">{c.email || '—'}</TableCell>
                                     <TableCell className="text-muted-foreground">{c.phone || '—'}</TableCell>
                                     <TableCell className="text-muted-foreground max-w-[200px] truncate">{c.address || '—'}</TableCell>
-                                    <TableCell className="text-muted-foreground">{c.order_count || 0}</TableCell>
+                                    <TableCell className="text-center font-mono">{c.order_count ?? 0}</TableCell>
                                     <TableCell>
                                         <div className="flex items-center gap-2">
                                             <Button variant="outline" size="sm" onClick={() => onEdit(c)}>編輯</Button>
