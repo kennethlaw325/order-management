@@ -57,13 +57,45 @@ router.get('/', (req, res) => {
       ORDER BY date ASC
     `).all();
 
+        const thisWeek = db.prepare(`
+            SELECT COUNT(*) as orders, COALESCE(SUM(total), 0) as revenue
+            FROM orders WHERE created_at >= date('now', '-7 days') AND status != 'cancelled'
+        `).get();
+
+        const lastWeek = db.prepare(`
+            SELECT COUNT(*) as orders, COALESCE(SUM(total), 0) as revenue
+            FROM orders WHERE created_at >= date('now', '-14 days')
+              AND created_at < date('now', '-7 days') AND status != 'cancelled'
+        `).get();
+
+        const thisWeekCustomers = db.prepare(`
+            SELECT COUNT(*) as count FROM customers WHERE created_at >= date('now', '-7 days')
+        `).get();
+
+        const lastWeekCustomers = db.prepare(`
+            SELECT COUNT(*) as count FROM customers
+            WHERE created_at >= date('now', '-14 days') AND created_at < date('now', '-7 days')
+        `).get();
+
+        const calcTrend = (curr, prev) => {
+            if (!prev || prev === 0) return null;
+            return ((curr - prev) / prev * 100).toFixed(1);
+        };
+
+        const trends = {
+            orders: calcTrend(thisWeek.orders, lastWeek.orders),
+            revenue: calcTrend(thisWeek.revenue, lastWeek.revenue),
+            customers: calcTrend(thisWeekCustomers.count, lastWeekCustomers.count),
+        };
+
         res.json({
             orders: orderStats,
             revenue: revenue.total_revenue,
             customers: customerCount.count,
             products: productStats,
             recentOrders,
-            salesByDay
+            salesByDay,
+            trends
         });
     } catch (error) {
         res.status(500).json({ error: error.message });

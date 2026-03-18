@@ -1,12 +1,16 @@
+import { Link } from 'react-router-dom';
 import { formatCurrency, formatDate } from '../../utils';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, StatusBadge } from '../../components/ui';
 
 function RecentOrdersTable({ orders }) {
     return (
         <Card>
-            <CardHeader>
-                <CardTitle className="text-base">近期訂單</CardTitle>
-                <CardDescription>最近的訂單記錄</CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                    <CardTitle className="text-base">近期訂單</CardTitle>
+                    <CardDescription>最近的訂單記錄</CardDescription>
+                </div>
+                <Link to="/orders" className="text-sm text-primary hover:underline">查看全部 →</Link>
             </CardHeader>
             <CardContent>
                 {orders?.length > 0 ? (
