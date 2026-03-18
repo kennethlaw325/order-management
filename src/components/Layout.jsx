@@ -18,6 +18,17 @@ function Layout() {
     const location = useLocation();
     const [sidebarCollapsed, setSidebarCollapsed] = useState(() => localStorage.getItem('sidebarCollapsed') === 'true');
     const [darkMode, setDarkMode] = useState(() => localStorage.getItem('theme') === 'dark');
+    const [badgeCounts, setBadgeCounts] = useState({ pendingOrders: 0, lowStock: 0 });
+
+    useEffect(() => {
+        fetch('/api/stats')
+            .then(r => r.json())
+            .then(data => setBadgeCounts({
+                pendingOrders: data?.orders?.pending || 0,
+                lowStock: data?.products?.low_stock || 0,
+            }))
+            .catch(() => {}); // silent fail — badges are optional
+    }, []);
 
     const pageInfo = PAGE_TITLES[location.pathname] || PAGE_TITLES['/'];
 
@@ -32,7 +43,7 @@ function Layout() {
 
     return (
         <div className="min-h-screen bg-background flex">
-            <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(prev => !prev)} />
+            <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(prev => !prev)} badgeCounts={badgeCounts} />
             <div className={cn(
                 'flex-1 flex flex-col transition-all duration-300',
                 sidebarCollapsed ? 'ml-16' : 'ml-64'
